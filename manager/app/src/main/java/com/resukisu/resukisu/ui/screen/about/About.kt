@@ -18,8 +18,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.twotone.Code
 import androidx.compose.material.icons.twotone.Copyright
 import androidx.compose.material.icons.twotone.Group
+import androidx.compose.material.icons.twotone.Info
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -127,7 +129,7 @@ fun AboutScreen() {
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .padding(top = 8.dp, bottom = 12.dp),
-                    color = MaterialTheme.colorScheme.surfaceBright.copy(
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(
                         alpha = CardConfig.cardAlpha
                     ),
                     message = AnnotatedString.fromHtml(
@@ -148,7 +150,14 @@ fun AboutScreen() {
                                 textDecoration = TextDecoration.Underline
                             )
                         )
-                    )
+                    ),
+                    icon = {
+                        Icon(
+                            imageVector = Icons.TwoTone.Info,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 )
             }
 
@@ -216,7 +225,7 @@ private fun StatusCard() {
             if (ThemeConfig.isEnableBlurExp)
                 Color.Transparent
             else
-                MaterialTheme.colorScheme.surfaceBright.copy(CardConfig.cardAlpha),
+                MaterialTheme.colorScheme.primaryContainer.copy(CardConfig.cardAlpha),
         shape = RoundedCornerShape(16.dp)
     ) {
         Column(

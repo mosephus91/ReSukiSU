@@ -330,17 +330,35 @@ fun SettingsPage(bottomPadding: Dp) {
                 SegmentedColumn(
                     title = stringResource(R.string.app_settings),
                     content = {
-                        item {
-                            // 更新检查开�?
-                            SettingsSwitchWidget(
-                                icon = Icons.TwoTone.Update,
-                                title = stringResource(R.string.settings_check_update),
-                                description = stringResource(R.string.settings_check_update_summary),
-                                checked = uiState.checkUpdate,
-                                onCheckedChange = { enabled ->
-                                    settingsViewModel.handleCheckUpdateChange(context, enabled)
-                                }
-                            )
+                        expandableItem(
+                            expanded = uiState.checkUpdate,
+                            topContent = {
+                                SettingsSwitchWidget(
+                                    icon = Icons.TwoTone.Update,
+                                    title = stringResource(R.string.settings_check_update),
+                                    description = stringResource(R.string.settings_check_update_summary),
+                                    checked = uiState.checkUpdate,
+                                    onCheckedChange = { enabled ->
+                                        settingsViewModel.handleCheckUpdateChange(context, enabled)
+                                    }
+                                )
+                            }
+                        ) {
+                            item(
+                                topPadding = 1.dp
+                            ) {
+                                SettingsSwitchWidget(
+                                    title = stringResource(R.string.settings_check_beta_update),
+                                    description = stringResource(R.string.settings_check_beta_update_summary),
+                                    checked = uiState.checkBetaUpdate,
+                                    onCheckedChange = { enabled ->
+                                        settingsViewModel.handleCheckBetaUpdateChange(
+                                            context,
+                                            enabled
+                                        )
+                                    }
+                                )
+                            }
                         }
 
                         item {

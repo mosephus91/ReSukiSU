@@ -132,6 +132,11 @@
     <string name="module_start_downloading">Start downloading: %s</string>
     <string name="module_action_success">Module action executed successfully.</string>
     <string name="new_version_available">New version %s is available, click to upgrade</string>
+    <string name="beta_version_available">New beta version %1$d is available, click to upgrade</string>
+    <string name="beta_update_check_failed">Couldn\'t check beta updates. Pull to refresh and try again.</string>
+    <string name="manager_update_stable">Stable update</string>
+    <string name="manager_update_beta">Beta update</string>
+    <string name="manager_update_details">Version: %1$s (%2$d)\nArchitecture: %3$s</string>
     <string name="launch_app">Launch</string>
     <string name="force_stop_app" formatted="false">Force stop</string>
     <string name="restart_app">Restart</string>
@@ -164,6 +169,8 @@
     <string name="module_changelog_failed">Fetch changelog failed: %s</string>
     <string name="settings_check_update">Update notifications</string>
     <string name="settings_check_update_summary">Auto-check for module and manager updates</string>
+    <string name="settings_check_beta_update">Check beta updates</string>
+    <string name="settings_check_beta_update_summary">Auto-check beta builds from the main branch</string>
     <string name="grant_root_failed">Failed to grant root!</string>
     <string name="home_pr_build_warning">This is a PR debug build. Do NOT use it in production!</string>
     <string name="action">Action</string>

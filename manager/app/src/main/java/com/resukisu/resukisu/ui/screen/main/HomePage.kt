@@ -6,6 +6,12 @@ import android.os.Build
 import android.os.PowerManager
 import android.system.Os
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -73,6 +79,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.resukisu.resukisu.BuildConfig
 import com.resukisu.resukisu.Natives
 import com.resukisu.resukisu.R
+import com.resukisu.resukisu.data.update.ManagerUpdateChannel
+import com.resukisu.resukisu.data.update.ManagerUpdateInfo
 import com.resukisu.resukisu.ksuApp
 import com.resukisu.resukisu.magica.MagicaService
 import com.resukisu.resukisu.ui.component.KsuIsValid
@@ -90,8 +98,9 @@ import com.resukisu.resukisu.ui.theme.CardConfig
 import com.resukisu.resukisu.ui.theme.ThemeConfig
 import com.resukisu.resukisu.ui.theme.blurEffect
 import com.resukisu.resukisu.ui.theme.blurSource
+import com.resukisu.resukisu.ui.util.LocalPermissionRequestInterface
 import com.resukisu.resukisu.ui.util.LocalSnackbarHost
-import com.resukisu.resukisu.ui.util.module.LatestVersionInfo
+import com.resukisu.resukisu.ui.util.downloader.downloadManagerUpdate
 import com.resukisu.resukisu.ui.util.reboot
 import com.resukisu.resukisu.ui.viewmodel.HomeUiState
 import com.resukisu.resukisu.ui.viewmodel.HomeViewModel
@@ -318,7 +327,20 @@ fun HomePage(
                     )
                 }
 
-                UpdateCard(uiState.latestVersionInfo)
+                ManagerUpdateCard(uiState.stableManagerUpdate)
+                ManagerUpdateCard(uiState.betaManagerUpdate)
+                if (uiState.isBetaManagerUpdateCheckFailed) {
+                    WarningCard(
+                        message = stringResource(R.string.beta_update_check_failed),
+                        icon = {
+                            Icon(
+                                imageVector = Icons.TwoTone.Error,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    )
+                }
 
                 if (uiState.isExtendedDataLoaded) {
                     InfoCard(
@@ -344,42 +366,79 @@ fun HomePage(
 }
 
 @Composable
-fun UpdateCard(newVersion: LatestVersionInfo) {
-    val currentVersionCode = BuildConfig.VERSION_CODE
-    val newVersionCode = newVersion.versionCode
-    val newVersionUrl = newVersion.downloadUrl
-    val changelog = newVersion.changelog
+private fun ManagerUpdateCard(update: ManagerUpdateInfo?) {
+    val visibilityState = remember { MutableTransitionState(false) }
+    var displayedUpdate by remember { mutableStateOf<ManagerUpdateInfo?>(null) }
 
-    val uriHandler = LocalUriHandler.current
-    val title = stringResource(id = R.string.module_changelog)
-    val updateText = stringResource(id = R.string.module_update)
-
-    if (newVersionCode > currentVersionCode) {
-        val updateDialog = rememberConfirmDialog(onConfirm = { uriHandler.openUri(newVersionUrl) })
-        WarningCard(
-            message = stringResource(id = R.string.new_version_available).format(newVersionCode),
-            color = MaterialTheme.colorScheme.outlineVariant,
-            icon = {
-                Icon(
-                    imageVector = Icons.TwoTone.Info,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-            },
-            onClick = {
-                if (changelog.isEmpty()) {
-                    uriHandler.openUri(newVersionUrl)
-                } else {
-                    updateDialog.showConfirm(
-                        title = title,
-                        content = changelog,
-                        markdown = true,
-                        confirm = updateText
-                    )
-                }
-            }
-        )
+    LaunchedEffect(update) {
+        if (update != null) displayedUpdate = update
+        visibilityState.targetState = update != null
     }
+
+    AnimatedVisibility(
+        visibleState = visibilityState,
+        enter = fadeIn() + expandVertically(),
+        exit = fadeOut() + shrinkVertically(),
+    ) {
+        displayedUpdate?.let { updateInfo ->
+            ManagerUpdateCardContent(updateInfo)
+        }
+    }
+}
+
+@Composable
+private fun ManagerUpdateCardContent(updateInfo: ManagerUpdateInfo) {
+    val context = LocalContext.current
+    val permissionRequestInterface = LocalPermissionRequestInterface.current
+    val channelTitle = stringResource(
+        if (updateInfo.channel == ManagerUpdateChannel.STABLE) {
+            R.string.manager_update_stable
+        } else {
+            R.string.manager_update_beta
+        }
+    )
+    val message = if (updateInfo.channel == ManagerUpdateChannel.STABLE) {
+        stringResource(R.string.new_version_available, updateInfo.versionCode)
+    } else {
+        stringResource(R.string.beta_version_available, updateInfo.versionCode)
+    }
+    val updateText = stringResource(R.string.module_update)
+    val details = stringResource(
+        R.string.manager_update_details,
+        updateInfo.versionName,
+        updateInfo.versionCode,
+        updateInfo.abi,
+    )
+    val dialogContent = if (updateInfo.changelog.isBlank()) {
+        details
+    } else {
+        "$details\n\n${updateInfo.changelog}"
+    }
+    val updateDialog = rememberConfirmDialog(
+        onConfirm = {
+            downloadManagerUpdate(context, permissionRequestInterface, updateInfo)
+        }
+    )
+
+    WarningCard(
+        message = message,
+        color = MaterialTheme.colorScheme.outlineVariant,
+        icon = {
+            Icon(
+                imageVector = Icons.TwoTone.Info,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+        },
+        onClick = {
+            updateDialog.showConfirm(
+                title = channelTitle,
+                content = dialogContent,
+                markdown = updateInfo.changelog.isNotBlank(),
+                confirm = updateText,
+            )
+        }
+    )
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
